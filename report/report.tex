@@ -1,0 +1,65 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{graphicx} % Required for inserting images.
+\usepackage[margin=25mm]{geometry}
+\parskip 4.2pt  % Sets spacing between paragraphs.
+% \renewcommand{\baselinestretch}{1.5}  % Uncomment for 1.5 spacing between lines.
+\parindent 8.4pt  % Sets leading space for paragraphs.
+\usepackage[font=sf]{caption} % Changes font of captions.
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\usepackage{verbatim}
+\usepackage{hyperref} % Required for inserting clickable links.
+\usepackage{natbib} % Required for APA-style citations.
+
+
+\title{This is the title: Of my report}
+\author{Tom Collins}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\begin{abstract}
+    200 words, and then we're done with the abstract.
+\end{abstract}
+
+% PLACEHOLDER: use \input{chapters/01_intro} or whatever the chapter is named to include it in the main document.
+
+% Here is an example citation when you want an author name like \cite{collins2011a} to appear in the text. And here's how to do a parenthetic citation, when you want to mention a reference at the end of a sentence or part of a sentence \citep{collins2013}.
+
+% It is possible to cite multiple references at the same time \citep{collins2011b,collins2016,lunn2007a,lunn2007b,ross2006,shannon1948}.
+
+% Change this later.
+\input{chapters/01_intro.tex}
+
+\section{Results}\label{sec:result}
+
+\section{Discussion}\label{sec:discussion}
+
+Blah
+
+\subsection{Limitations}\label{sec:limitations}
+
+Blah blah
+
+\subsection{Future work}\label{sec:future}
+
+Did you see what I wrote in Sec.~\ref{sec:intro}? Not too controversial I hope!
+
+% EXAMPLE FIGURE INPUT. Copy this for each section. Omit this from the final report.
+\begin{figure}[htbp!]
+\begin{center}
+    \includegraphics[scale=0.5]{figures/GZKCwLEWsAAOv0S.jpg}
+\end{center}
+\caption{Mr Rizzler.}
+\label{fig:venn}
+\end{figure}
+
+\bibliographystyle{apalike}
+\bibliography{example}
+
+\end{document}

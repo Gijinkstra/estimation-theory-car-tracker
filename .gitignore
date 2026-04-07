@@ -1,0 +1,118 @@
+# MATLAB files to ignore.
+*.asv
+
+# Latex build files to ignore.
+# Compiled output - Keep .pdf.
+*.dvi
+*.ps
+*.eps
+
+# Auxiliary files
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
+# Intermediate files
+*.dvi
+*.xdv
+*-converted-to.*
+
+# Bibliography
+*.bbl
+*.bcf
+*.blg
+*-blx.aux
+*-blx.bib
+*.run.xml
+
+# Indices
+*.idx
+*.ilg
+*.ind
+*.ist
+
+# Nomenclature
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.lzo
+*.lzs
+*.slg
+*.slo
+*.sls
+
+# Glossaries
+*.glo
+*.gls
+*.glg
+
+# Hyperref
+*.synctex
+*.synctex.gz
+*.synctex(busy)
+*.pdfsync
+
+# Listings
+*.lol
+
+# TikZ & PGF
+*.dpth
+*.md5
+*.auxlock
+
+# todonotes
+*.tdo
+
+# pax
+*.pax
+
+# Beamer
+*.nav
+*.pre
+*.snm
+*.vrb
+
+# Minted (code highlighting)
+_minted*/
+*.pyg
+
+# Latexmk
+*.fdb_latexmk
+
+# Makeindex
+*.lpz
+
+# Xindy
+*.xdy
+
+# WinEdt
+*.bak
+*.sav
+
+# Texpad
+.texpadtmp/
+
+# LyX
+*.lyx~
+
+# Kile
+*.backup
+
+# Build directories
+build/
+out/
+output/
+EOF
