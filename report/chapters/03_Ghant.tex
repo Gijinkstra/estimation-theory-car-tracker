@@ -2,12 +2,6 @@
 \section{Introduction}
 \label{sec:introduction}
 
-This report implements estimation theory to determine the location and velocity of a vehicle on a racetrack. The estimation uses distance measurements from a network of beacons, the number of beacons being used must be kept to a minimum to simulate real world costs of such equipment. The track is made up of two straight sections connected by two circular arcs, the trackwidth remains a constant 4m. The system has the strict constraint that the vehicle must never cross the track limits, with the desire for the vehicle to remain in the centre of the track.
-The Sensor data is collected at a frequency of 100Hz, the beacons experience a standard deviation of 1.5m in the distance measurement. The Probability Density Function of the distance measurements is unknown. 
-To develop a solution to complete the estimation in the racetrack, the estimator was progressively built. The first stage was building a simplified one dimensional problem, by estimating the position of a train on a linear track, the direction of movement is fixed. The second stage of development saw the expansion to two dimensional space, allowing the vehicle to move in both the x and y axis along a straight track. 
-These models were then developed further and implemented into the estimator for the race track.
-
-To develop a robust solution for the complete racetrack, the estimator was built progressively. First, a simplified one-dimensional problem was solved by estimating the position of a train on a linear track, where the direction of movement is fixed. Next, the model was expanded to a two-dimensional space, allowing a vehicle to move both longitudinally and laterally along a straight road. Finally, these foundational models were synthesised to create the final estimator applied to the complex racetrack geometry.
 
 \subsection{Motivation}
 \label{subsec:motivation}
