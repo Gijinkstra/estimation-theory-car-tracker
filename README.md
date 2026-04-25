@@ -47,7 +47,7 @@ A Gaussian velocity model is used, demonstrating why a naïve model with a rando
 
 An example of the trajectory of a vehicle with this trajectory is plotted below: 
 
-![ekf-video](report/assets/ekf-video.mp4)
+<video src="report/assets/ekf-video.mp4"></video>
 
 As expected, the estimator cannot enforce bounds on the state trajectories without violating assumptions of the EKF, and the state dynamics cause the trajectory of the vehicle to travel along the wall as the noise on the velocity term accumulates.
 
