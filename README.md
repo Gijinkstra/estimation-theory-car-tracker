@@ -19,7 +19,7 @@ project/
 │
 ├── src				# Main project files.
 │
-├── testing-area	# Put all messy scripts/testin ideas here.
+├── testing-area	# Put all messy scripts/testing ideas here.
 ```
 
 ## Problem statement
@@ -43,11 +43,11 @@ Two estimators have been employed for the system, the Extended Kalman Filter, an
 
 ### Extended Kalman Filter
 
-A Gaussian velocity model is used, demonstrating why a naïve model with a random walk in velocity is not an appropriate model for this style of problem:
+A Gaussian velocity model is used, demonstrating why a naïve model with a random walk in velocity is not appropriate for this style of problem:
 
 An example of the trajectory of a vehicle with this trajectory is plotted below: 
 
-<video src="report/assets/ekf-video.mp4"></video>
+![ekf-animation](report/assets/ekf-video.gif)
 
 As expected, the estimator cannot enforce bounds on the state trajectories without violating assumptions of the EKF, and the state dynamics cause the trajectory of the vehicle to travel along the wall as the noise on the velocity term accumulates.
 
