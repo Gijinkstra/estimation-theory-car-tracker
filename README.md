@@ -1,6 +1,12 @@
 # Car Tracker Project
 
-The following pieces of information are possibly not going to be used. This is for collaborative report generation using git and latex, but as a group we may not use this. Going to set it up so we have something here for now.
+This is the repository for Team Alpha for Queen's University Belfast ELE8101 Control and Estimation theory module coursework 2 assignment.
+
+**Team members:**
+
+- Evan Calvert
+- Conor Hamill
+- Alastair Dempsey
 
 ## Project layout
 
@@ -16,190 +22,33 @@ project/
 ├── testing-area	# Put all messy scripts/testin ideas here.
 ```
 
-## The following info was produced using Claude to collaborate on LaTeX reports
+## Problem statement
 
-- May have to install a markdown previewer for VSCode to view this document properly. Usually previewed using `Ctrl + Shift + V`.
-- Perl will likely need to be installed to run latexmk in the command line for Windows. I can do this, but if you want it, it can be done with `wingit install StrawberryPerl.StrawberryPerl` in Powershell.
-	- Check this by running `perl --version` followed by `latexmk --version`.
-- When compiling in the terminal, run `latexmk -pdf report.tex`.
+The objective of the assignment is to build a vehicle model and an estimator to follow a predetermined track geometry, and determine the velocity and the position of the vehicle relative to 3 fixed beacon locations around the track.
 
-## LaTeX Project Layout for Git Collaboration
+![track-pic](report/figures/track-geometry.png)
 
-### Recommended Directory Structure
+where:
 
-```
-project/
-│
-├── .gitignore
-├── README.md
-├── Makefile                  # or latexmkrc
-│
-├── main.tex                  # root document
-├── preamble.sty              # shared custom styles/packages
-│
-├── chapters/                 # or sections/
-│   ├── 01_introduction.tex
-│   ├── 02_background.tex
-│   ├── 03_methodology.tex
-│   └── 04_conclusion.tex
-│
-├── figures/
-│   ├── raw/                  # original source files (svg, py, R scripts)
-│   └── output/               # generated figures (tracked .pdf/.png)
-│
-├── tables/
-│   └── results.tex
-│
-├── bibliography/
-│   └── references.bib
-│
-└── build/                    # gitignored compiled output
-```
+- A: Circle 1 centre point [0, 0]
+- B: Circle 2 centre point [100, 0]
+- R: 50m
+- r: 46m
+- d: 100m
+- $\rho$: 25m
 
----
+## Estimators
 
-### `main.tex` Structure
+Two estimators have been employed for the system, the Extended Kalman Filter, and a Bayesian estimator.
 
-```latex
-\documentclass[12pt, a4paper]{article}
-\usepackage{preamble}
+### Extended Kalman Filter
 
-\title{Project Title}
-\author{Author One \and Author Two}
-\date{\today}
+A Gaussian velocity model is used, demonstrating why a naïve model with a random walk in velocity is not an appropriate model for this style of problem:
 
-\begin{document}
+An example of the trajectory of a vehicle with this trajectory is plotted below: 
 
-\maketitle
-\tableofcontents
+![ekf-video](report/assets/ekf-video.mp4)
 
-\input{chapters/01_introduction}
-\input{chapters/02_background}
-\input{chapters/03_methodology}
-\input{chapters/04_conclusion}
+As expected, the estimator cannot enforce bounds on the state trajectories without violating assumptions of the EKF, and the state dynamics cause the trajectory of the vehicle to travel along the wall as the noise on the velocity term accumulates.
 
-\bibliographystyle{plain}
-\bibliography{bibliography/references}
-
-\end{document}
-```
-
----
-
-### `Makefile` for Easy Building
-
-```makefile
-MAIN = main
-LATEX = pdflatex
-BIBTEX = biber
-
-all: $(MAIN).pdf
-
-$(MAIN).pdf: $(MAIN).tex
-	$(LATEX) $(MAIN)
-	$(BIBTEX) $(MAIN)
-	$(LATEX) $(MAIN)
-	$(LATEX) $(MAIN)
-
-clean:
-	rm -f *.aux *.log *.bbl *.bcf *.blg *.toc *.out *.run.xml
-	rm -f chapters/*.aux tables/*.aux
-
-cleanall: clean
-	rm -f $(MAIN).pdf
-
-.PHONY: all clean cleanall
-```
-
-Or use **latexmk** (recommended):
-```bash
-# .latexmkrc
-$pdf_mode = 1;
-$out_dir = 'build';
-$clean_ext = 'aux bbl bcf blg idx ilg ind lof lot out run.xml toc acn acr alg glg glo gls ist fls fdb_latexmk synctex.gz';
-```
-
-```bash
-latexmk -pdf main.tex       # build
-latexmk -C                  # clean all
-```
-
----
-
-### `.gitignore` for This Layout
-
-```gitignore
-# Build output
-build/
-*.pdf
-*.dvi
-
-# Aux files
-*.aux
-*.log
-*.bbl
-*.bcf
-*.blg
-*.toc
-*.out
-*.fls
-*.gz
-*.run.xml
-*.fdb_latexmk
-
-# Keep these PDFs if figures are pre-compiled
-!figures/output/*.pdf
-!figures/output/*.png
-```
-
----
-
-### Git Collaboration Tips
-
-**Branch strategy:**
-```bash
-main          # stable, compiled version
-dev           # integration branch
-chapter/intro # per-chapter branches (one author per branch)
-```
-
-**Reducing merge conflicts:**
-```latex
-% Write one sentence per line — Git diffs line by line
-This is the first sentence.
-This is the second sentence, which is long and wraps
-but should still be on one line for clean diffs.
-```
-
-**Useful `.gitattributes`** to improve diffs:
-```gitattributes
-*.tex   diff=tex
-*.bib   diff=bibtex
-*.sty   diff=tex
-```
-
-Enable in git config:
-```bash
-git config diff.tex.xfuncname "^(\\\\(sub)*section\\*?\\{.*)$"
-```
-
----
-
-### Quick Init Script
-
-```bash
-#!/bin/bash
-mkdir -p project/{chapters,figures/{raw,output},tables,bibliography,build}
-cd project
-touch main.tex preamble.sty Makefile README.md .gitignore
-touch chapters/{01_introduction,02_background,03_methodology,04_conclusion}.tex
-touch bibliography/references.bib
-git init
-git add .
-git commit -m "Initial LaTeX project structure"
-```
-
-Run with:
-```bash
-bash setup.sh
-```
+### Bayesian Estimator
