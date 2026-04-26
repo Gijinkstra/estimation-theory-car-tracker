@@ -1,0 +1,49 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{System Model}
+
+The system model utilised for the trajectory is based on the Frenet frame of reference [INSERT REFERENCE HERE]:
+\begin{equation}
+    \begin{aligned}
+        s_{t+1} &= s_t + h \, v_{s,t} \\
+        l_{t+1} &= l_t + h \, v_{l,t} \\
+        v_{s,t+1} &= v_{s,t} + w_{s,t} \\
+        v_{l,t+1} &= v_{l,t} + w_{l,t}
+    \end{aligned}
+\end{equation}
+where $s_t$ is the arc position, $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, $v_l$ is the lateral velocity, and $w_t$ is a gaussian noise term:
+\begin{align}
+    w_t \sim \mathcal{N}(0, \begin{bmatrix} 0.2 \\ 0.01 \end{bmatrix})
+\end{align}
+,effectively acting as small deviations in acceleration. The state vector is:
+\begin{align}
+    \mathbf{x_t} = \begin{bmatrix}s \\ l \\ v_s \\ v_l \end{bmatrix}
+\end{align}
+The full matrix form implemented in MATLAB is as follows:
+\begin{align}
+    \mathbf{x}_{t+1} = {\rm A}\mathbf{x}_t + {\rm G}\mathbf{w}_t
+\end{align}
+where $\mathbf{x}_{t}$ is the state vector, $A$ is the state transition matrix, $G$ is the noise transition matrix. Note that the Gaussian noise term acts independantlyon the velocity components of the system. No uncertainty in position has been utilised in this model.
+
+This state model is utilised to keep the dynamics of the system linear. By changing the co-ordinate basis of the state model, this shifts all the non-linearity into the measurement model of the system. As the problem is inherently non-linear, the Jacobian that was created in earlier steps of the development process can be modified to include the conversion from the current position in the Frenet frame back to Cartesian co-ordinates for calculation.
+\begin{align}
+    \mathbf{y}_t = ||r_{x, y} - r_{x, y}^{(i)}||_2 + o_t
+\end{align}
+where $\mathbf{y}$ is the output vector (Euclidean distance from each beacon), $r_{x, y}$ is the position of the vehicle on the track in cartesian co-ordinates, $r_{x, y}^{(i)}$ is the position of each beacon measurement in cartesian co-ordinates and $o_t$ is a gaussian noise term. Noise is added independantly to each beacon reading, with a standard deviation of 1.5m as defined in the specifcation.
+
+There are defined physical limitations on the parameters of the vehicle as follows:
+\begin{align*}
+    l &\in [-2, 2] \\
+    v_s &\in (0, 25) \\
+    v_l &\in (-0.55, 0.55)
+\end{align*}
+
+\subsection{Beacon Placement}
+\label{sec:beacon}
+
+Location must be inferred from a minimum number of beacon measurements as outlined by the specification. A single beacon measurement is not sufficient to infer the position of the vehicle, as the Euclidean distance would only provide a radial distance from the singular beacon (the distance from the beacon could be anywhere on a circle surrounding the beacon).
+
+Two beacons would present a localisation problem, as the location of the vehicle could be at either of two intersection points on the radial distances from the beacon positions.
+
+Three beacons are the minimum number required to completely localise the position of the vehicle on the track geometry. Given this, the positioning of the beacons are considered to ensure that there is no bias to any one location on the track. As the beacon readings are available immediately and there is no increase in the additive noise variance to the system based on the range of the beacons (the further away the beacons, the greater the noise), beacons can be placed further away to minimise the relative noise contribution.

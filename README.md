@@ -31,6 +31,11 @@ The scripts will require installation of Casadi to run.
 - [Casadi version: 3.7.2](https://web.casadi.org/get/)
 - Arrow.m by Eric Johnson (MATLAB Add On)
 
+Report requirements:
+
+- LaTeX
+- Strawberry Perl (Windows - required for latexmk)
+
 ## Problem statement
 
 The objective of the assignment is to build a vehicle model and an estimator to follow a predetermined track geometry, and determine the velocity and the position of the vehicle relative to 3 fixed beacon locations around the track. The track geometry is as follows:
@@ -65,6 +70,10 @@ $\mathbf{y} = ||r_{x, y} - r_{x, y}^{(i)}||_2 + o_t$
 where $\mathbf{y}$ is the output vector (Euclidean distance from each beacon), $r_{x, y}$ is the position of the vehicle on the track in cartesian co-ordinates, $r{x, y}^{(i)}$ is the position of each beacon measurement in cartesian co-ordinates and $o_t$ is a gaussian noise term. The state vector is:
 
 $\mathbf{x_t} = \begin{bmatrix}s \\ l \\ v_s \\ v_l \end{bmatrix}$
+
+Beacon placements as follows:
+
+$r_{x,y} = \begin{bmatrix}-100 & -60 \\ 20 & 90 \\ 180 & -10 \end{bmatrix}$
 
 An example of the trajectory of a vehicle with this trajectory is plotted below:
 
