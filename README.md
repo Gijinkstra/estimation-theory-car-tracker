@@ -58,11 +58,13 @@ The system model utilised for the trajectory is based on the Frenet frame of ref
 
 $\mathbf{s_{t+1}} = \mathbf{s_t} + v_{t}h + w_t$
 
-$\mathbf{y} = ||r_{x, y} - r{x, y}^{(i)}||_2 + v_t$
+where $\mathbf{x_t}$ is the full state space, $s$ is the arc position, $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, $v_l$ is the lateral velocity, and $w_t$ is a gaussian noise term, effectively acting as small deviations in acceleration. The output is defined as:
+
+$\mathbf{y} = ||r_{x, y} - r_{x, y}^{(i)}||_2 + o_t$
+
+where $\mathbf{y}$ is the output vector (Euclidean distance from each beacon), $r_{x, y}$ is the position of the vehicle on the track in cartesian co-ordinates, $r{x, y}^{(i)}$ is the position of each beacon measurement in cartesian co-ordinates and $o_t$ is a gaussian noise term. The state vector is:
 
 $\mathbf{x_t} = \begin{bmatrix}s \\ l \\ v_s \\ v_l \end{bmatrix}$
-
-where $\mathbf{x_t}$ is the full state space, $s$ is the arc position, $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, and $v_l$ is the lateral velocity.
 
 An example of the trajectory of a vehicle with this trajectory is plotted below:
 
