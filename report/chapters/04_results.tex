@@ -1,0 +1,26 @@
+\section{Results}
+\label{sec:results}
+
+\begin{figure}[htbp!]
+\label{fig:ekf-trajectory}
+\begin{center}
+    \includegraphics[scale=0.5]{figures/ekf-trajectories.png}
+\end{center}
+\caption{Simulation of the EKF on the track trajectory (top left), associated range from each beacon (bottom left), arc position trajectory, (top right), lateral position trajectory (middle right) and error between the true arc position and arc velocity (bottom right)}
+\end{figure}
+
+\begin{figure}[htbp!]
+\label{fig:ekf-exec-time}
+\begin{center}
+    \includegraphics[scale=0.7]{figures/simulation-time.png}
+\end{center}
+\caption{Distribution of $n$ execution times for one arc trajectory $(n=3325)$, mean execution time of the EKF}
+\end{figure}
+
+\begin{figure}[htbp!]
+\label{fig:monte-carlo}
+\begin{center}
+    \includegraphics[scale=0.5]{figures/monte-carlo.png}
+\end{center}
+\caption{Monte Carlo simulation for each state variable for $n=100$ runs}
+\end{figure}
