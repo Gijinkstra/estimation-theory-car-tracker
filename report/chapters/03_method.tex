@@ -5,6 +5,7 @@
 
 The system model utilised for the trajectory is based on the Frenet frame of reference [INSERT REFERENCE HERE]:
 \begin{equation}
+\label{eq:sys-eqs}
     \begin{aligned}
         s_{t+1} &= s_t + h \, v_{s,t} \\
         l_{t+1} &= l_t + h \, v_{l,t} \\
@@ -12,38 +13,104 @@ The system model utilised for the trajectory is based on the Frenet frame of ref
         v_{l,t+1} &= v_{l,t} + w_{l,t}
     \end{aligned}
 \end{equation}
-where $s_t$ is the arc position, $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, $v_l$ is the lateral velocity, and $w_t$ is a gaussian noise term:
+where $s_t$ is the arc position, $h$ is the sampling period ($fs = 100Hz$), $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, $v_l$ is the lateral velocity, and $w_t$ is a gaussian noise term:
 \begin{align}
-    w_t \sim \mathcal{N}(0, \begin{bmatrix} 0.2 \\ 0.01 \end{bmatrix})
+\label{eq:noise}
+    w_t \sim \mathcal{N}\left(\mathbf{0}, \begin{bmatrix} 0.04 & 0 \\ 0 & 0.0001 \end{bmatrix}\right)
 \end{align}
-,effectively acting as small deviations in acceleration. The state vector is:
+physically corresponding to small deviations in acceleration. The state vector is:
 \begin{align}
+\label{eq:state-vec}
     \mathbf{x_t} = \begin{bmatrix}s \\ l \\ v_s \\ v_l \end{bmatrix}
 \end{align}
 The full matrix form implemented in MATLAB is as follows:
 \begin{align}
+\label{eq:sys-model}
     \mathbf{x}_{t+1} = {\rm A}\mathbf{x}_t + {\rm G}\mathbf{w}_t
 \end{align}
-where $\mathbf{x}_{t}$ is the state vector, $A$ is the state transition matrix, $G$ is the noise transition matrix. Note that the Gaussian noise term acts independantlyon the velocity components of the system. No uncertainty in position has been utilised in this model.
+where $\mathbf{x}_{t}$ is the state vector, $A$ is the state transition matrix, $G$ is the noise transition matrix. Note that the Gaussian noise term acts independantly on the velocity components of the system. No uncertainty in position has been utilised in this model.
 
 This state model is utilised to keep the dynamics of the system linear. By changing the co-ordinate basis of the state model, this shifts all the non-linearity into the measurement model of the system. As the problem is inherently non-linear, the Jacobian that was created in earlier steps of the development process can be modified to include the conversion from the current position in the Frenet frame back to Cartesian co-ordinates for calculation.
 \begin{align}
+\label{eq:measurement-model}
     \mathbf{y}_t = ||r_{x, y} - r_{x, y}^{(i)}||_2 + o_t
 \end{align}
-where $\mathbf{y}$ is the output vector (Euclidean distance from each beacon), $r_{x, y}$ is the position of the vehicle on the track in cartesian co-ordinates, $r_{x, y}^{(i)}$ is the position of each beacon measurement in cartesian co-ordinates and $o_t$ is a gaussian noise term. Noise is added independantly to each beacon reading, with a standard deviation of 1.5m as defined in the specifcation.
+where $\mathbf{y}$ is the output vector (Euclidean distance from each beacon), $r_{x, y}$ is the position of the vehicle on the track in cartesian co-ordinates, $r_{x, y}^{(i)}$ is the position of each beacon measurement in cartesian co-ordinates and $o_t$ is a gaussian noise term. Noise is added independantly to each beacon reading, with a standard deviation of 1.5m as defined in the specification.
 
 There are defined physical limitations on the parameters of the vehicle as follows:
-\begin{align*}
-    l &\in [-2, 2] \\
-    v_s &\in (0, 25) \\
-    v_l &\in (-0.55, 0.55)
-\end{align*}
+\begin{equation}
+\label{eq:state-constraints}
+    \begin{aligned}
+        l &\in [-2, 2] \\
+        v_s &\in [0, 25] \\
+        v_l &\in [-0.55, 0.55]
+    \end{aligned}
+\end{equation}
+
+\subsubsection{Track geometry}
+
+The track geometry is provided as part of the specification:
+\begin{figure}[htbp!]
+\begin{center}
+    \includegraphics[scale=0.8]{figures/track-geometry.png}
+\end{center}
+\caption{Track geometry: $R: 50m$, $r: 46m$, $d: 100m$, $\rho: 25m$}
+\label{fig:track}
+\end{figure}
+The track is constructed by defining two circles of radii $r$ and $\rho$ centred at $(0, 0)$ and $(100, 0)$ respectively. Two tangent lines can be constructed based on the common tangent to both radii (external tangent) [INSERT REFERENCE HERE].
+
+The outer boundary of the track can be defined by repeating this process for two additional circles of radii $R$ and $\rho + 4$m. The centreline of the track can then be generated simply by taking the average value of the inner and outer bounds.
+To save on development time, the Claude Opus 4.6 model was utilised to construct the track geometry. The inital results of the model were incorrect, producing the internal tangent lines, and was adjusted to correct this. The function is included in [INSERT SECTION REFERENCE HERE].
+
+\subsubsection{Co-ordinate transformation}
+% This section needs beefed out ideally, I'm pretty sure I have a vague understading of this, also have disclosed the use of Claude for this bit too.
+The base track geometry is defined in cartesian co-ordinates, and converted to the Frenet frame $s_i = f(x_i,y_i)$, is defined as follows:
+\begin{equation}
+\label{eq:frenet-frame}
+    s_i = \sum_{k=1}^{i} \sqrt{(x_{k} - x_{k-1})^2 + (y_{k} - y_{k-1})^2}
+\end{equation}
+To convert back to cartesian co-ordinates from the Frenet frame, the $s$ co-ordinates are interpolated between the current point and a point 0.01m ahead of the current position. The tangent and normal directions are then calculated for conversion back to cartesian. This method is also applied to the Jacobian of the system.
+
+\subsubsection{Linearisation}
+
+As the measurement model of the system is non-linear, an approximation method must be applied to the system to implement the Extended Kalman Filter estimator [INSERT REF TO PANTELIS' NOTEBOOKS HERE]. The Jacobian of a function is defined as follows:
+
+\begin{equation}
+\label{eq:jacobian}
+Jf(x) = \begin{bmatrix}
+    \tfrac{\partial f_1(x)}{\partial x_1} & \tfrac{\partial f_1(x)}{\partial x_2} & \cdots & \tfrac{\partial f_1(x)}{\partial x_n}
+    \\
+    \vdots                                & \vdots                                & \ddots & \vdots
+    \\
+    \tfrac{\partial f_m(x)}{\partial x_1} & \tfrac{\partial f_m(x)}{\partial x_2} & \cdots & \tfrac{\partial f_m(x)}{\partial x_n}
+\end{bmatrix}
+\end{equation}
+
+Given that the measurement model is continuously differentiable, the Jacobian can be used to linearise via a first order Taylor approximation:
+
+\begin{equation}
+\label{eq:linearisation}
+    f(x) \approx f(x_0) + Jf(x_0) (x - x_0)
+\end{equation}
+
+This can be applied to each row of the beacon locations (3 distinct cartesian co-ordinate locations). Computation of the Jacobian was carried out using CasADi 3.7.2 [INSERT REFERENCE HERE].
 
 \subsection{Beacon Placement}
 \label{sec:beacon}
-
+% Would be ideal to have pictures in here to highlight the different scenarios, don't think I have time though.
 Location must be inferred from a minimum number of beacon measurements as outlined by the specification. A single beacon measurement is not sufficient to infer the position of the vehicle, as the Euclidean distance would only provide a radial distance from the singular beacon (the distance from the beacon could be anywhere on a circle surrounding the beacon).
 
 Two beacons would present a localisation problem, as the location of the vehicle could be at either of two intersection points on the radial distances from the beacon positions.
 
-Three beacons are the minimum number required to completely localise the position of the vehicle on the track geometry. Given this, the positioning of the beacons are considered to ensure that there is no bias to any one location on the track. As the beacon readings are available immediately and there is no increase in the additive noise variance to the system based on the range of the beacons (the further away the beacons, the greater the noise), beacons can be placed further away to minimise the relative noise contribution.
+Three beacons are the minimum number required to completely localise the position of the vehicle on the track geometry. Given this, the positioning of the beacons are considered to ensure that there is no bias to any one location on the track. As the beacon readings are available immediately and there is no increase in the additive noise variance to the system based on the range of the beacons, they can be placed further away to minimise the relative noise contribution.
+
+\subsection{Extended Kalman Filter}
+
+The Extended Kalman Filter (EKF) has been used to estimate the state of the system. By applying the lnearisation routine to the standard Kalman Filter system, an approximation of the measurement model can be formulated. In this system, the noise is additive, so $A$ is constant, $\tilde{Q}$ is constant, $\tilde{R}$ is constant and the only system matrix which changes is the measurement Jacobian $C = J_x h(\tilde{x})$
+\footnote{
+    We refer to Dr.\ Pantelis Sopasakis' full derivation from the following repository: \url{https://github.com/alphaville/EstimationTheoryNotebooks}
+}
+
+For the EKF, the system must feature only gaussian noise terms, thus, the estimator will not behave correctly. As the domain of the gaussian spans all $\mathbb{R}$, it will violate the constraints  of the system by allowing the lateral position of the vehicle to travel outside of the track. This is a known limitation of the EKF, in that constraints cannot be imposed on the system. One method for forbidding unphysical behaviour in the system is to constrain the output of the estimated state to the only allowed domain of each respective state variable. This will also introduce an error in the measurement and time update terms, which would propagate through each subsequent update step, leading to an accumulation in error as the normality assumption has been violated. The estimated state trajectory would drift over time, causing the estimator to perform poorly.
+The EKF is clearly not the correct approach for this type of problem, but provides a reasonable baseline approach to the problem.
+
