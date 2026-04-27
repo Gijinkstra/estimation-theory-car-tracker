@@ -1,0 +1,269 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+
+\begin{document}
+
+\section{Bayesian Moving-Horizon Estimator}
+\label{sec:mhe}
+
+ Given the measurement equation is non-linear due to the Euclidean range operation and given the lateral process noise $w_{l}$ is non-Gaussian (Beta-based) the Bayesian Moving-Horizon Estimator (MHE) is a natural choice because it can accommodate non-linear measurement models, non-Gaussian process noise via Gaussian approximations, and express inequality constraints exactly. At every discrete time step $k$ the estimator solves a small optimisation problem using the same approach as the Full Information Estimator (FIE). However instead of solving over the entire measurement history only the most recent $(N_{\text{mhe}}+1)$ states are considered and all older information is summarised through a Gaussian \emph{arrival cost} using the oldest state in the window as the prior. 
+
+% ---------------------------------------------------------------------
+\subsection{Optimisation}
+\label{subsec:est_fmincon}
+
+The MHE optimisation problem is solved at every time step using MATLAB's \texttt{fmincon}, a general-purpose constrained non-linear solver. The solver is called using
+\begin{equation*}
+    \texttt{fmincon}\bigl(\,f,\, z_{0},\, A,\, b,\, A_{\text{eq}},\, b_{\text{eq}},\, lb,\, ub,\, c_{\text{nl}},\, \text{options}\,\bigr).
+\end{equation*}
+The following arguments must therefore be supplied:
+\begin{enumerate}
+    \item a scalar cost function $f(z)$;
+    \item an initial guess $z_{0}$ for the decision variable, using $x_0$ for $k=1$ and then using the previous window's solution for $k>1$;
+    \item linear equality constraints $A_{\text{eq}},\, b_{\text{eq}}$ enforcing the dynamic equations for $s$ and $l$;
+    \item simple bounds $lb,\, ub$ enforcing the track-width constraint on $l$;
+\end{enumerate}
+The remaining arguments: $A$, $b$ and $c_{\text{nl}}$ are not required and are passed as empty matrices. The default settings are used for the solver options. 
+
+The decision variable itself is the flattened sequence of states inside the window,
+\begin{equation}
+    z \;=\; \mathrm{vec}\,\mathbf{X}_{\text{win}},
+    \qquad
+    \mathbf{X}_{\text{win}} \;=\; \bigl[\,\mathbf{x}_{1}\;\mathbf{x}_{2}\;\cdots\;\mathbf{x}_{N_{\text{mhe}}+1}\,\bigr] \;\in\; \mathbb{R}^{4\times(N_{\text{mhe}}+1)},
+    \label{eq:est_decision}
+\end{equation}
+so $z\in\mathbb{R}^{4(N_{\text{mhe}}+1)}$. The $4$ comes from the number of states $(s,v,l,vl)$. Every state $\mathbf{x}_{j}$ with $j = 1,\ldots,N_{\text{mhe}}$ has an associated measurement $\mathbf{y}_{j}$, whereas the last state $\mathbf{x}_{N_{\text{mhe}}+1}$ is propagated forward using the dynamic equations and has no measurement of its own. This is the estimated value. 
+
+% ---------------------------------------------------------------------
+\subsubsection{Cost Function}
+\label{subsubsec:est_cost}
+
+The cost function is derived from the PDF of; a series of states conditional on (already given) a series of measurements. From Bayes' rule together this can be simplified as:
+\begin{equation}
+    p(\mathbf{X}_{\text{win}}\,|\,\mathbf{Y}_{\text{win}})
+    \;\propto\;
+    p(\mathbf{x}_{1})
+    \;\prod_{j=1}^{N_{\text{mhe}}} p(\mathbf{x}_{j+1}\,|\,\mathbf{x}_{j})
+    \;\prod_{j=1}^{N_{\text{mhe}}} p(\mathbf{y}_{j}\,|\,\mathbf{x}_{j}),
+    \label{eq:posterior_factor}
+\end{equation}
+in which the first term corresponds to the probability of the first state in the window, also called the prior or arrival cost. The second term corresponds to the probability of satisfying the dynamics, also called the transition cost. The third term is probability of the states given the measurements, also called the likelihood or measurement cost. Approximating each factor as Gaussian and taking $-2\log$ of both sides, any constants drop and the cost reduces to a sum of three quadratic terms:
+\begin{equation}
+    J(z) \;=\; J_{\text{arr}}(\mathbf{x}_{1}) \;+\; J_{\text{trans}}(\mathbf{X}_{\text{win}}) \;+\; J_{\text{meas}}(\mathbf{X}_{\text{win}};\,\mathbf{Y}_{\text{win}}).
+    \label{eq:cost_total}
+\end{equation}
+
+\paragraph{Arrival cost.}
+This carries everything the estimator knows about $\mathbf{x}_{1}$ from data prior to the window. Approximated as a Gaussian $\mathcal{N}(\mathbf{x}_{\text{arr}},\,P_{\text{arr}})$, the quadratic cost is given by:
+\begin{equation}
+    J_{\text{arr}}(\mathbf{x}_{1}) \;=\; (\mathbf{x}_{1} - \mathbf{x}_{\text{arr}})^{\top} P_{\text{arr}}^{-1} (\mathbf{x}_{1} - \mathbf{x}_{\text{arr}}).
+    \label{eq:cost_arr}
+\end{equation}
+The arrival mean $\mathbf{x}_{\text{arr}}$ and covariance $P_{\text{arr}}$ summarise all information accumulated prior to the window. While the window is still filling they are taken from the original initial-state prior $(\mathbf{x}_{0,\text{prior}},\,P_{0})$, and once the window is full the prior is taken as the oldest set of states in the window (the second oldest in the previous window is the actual implementation), the prior covariance is then reduced to 0.1x of the initial covariance given we expect this value will be more accurate. 
+
+\paragraph{Transition cost.}
+The transition factors are determined using the process model of equations. The $s$ and $l$ transitions are linear and deterministic given $v_{j}$ and $v_{l,j}$ and so are enforced using the equality constraints directly in the optimiser rather than inside the cost function. The longitudinal process noise is already zero mean gaussian and is used directly. To simplify the estimation problem, the Beta-distributed lateral process noise $w_{l}$ is replaced by a zero-mean Gaussian of standard deviation $\sigma_{l,\text{est}}$. The transition cost reduces to the quadratic form:
+\begin{equation}
+    J_{\text{trans}}(\mathbf{X}_{\text{win}}) \;=\; \sum_{j=1}^{N_{\text{mhe}}}
+        \begin{bmatrix} v_{j+1}-v_{j} \\ v_{l,j+1}-v_{l,j} \end{bmatrix}^{\top}
+        Q^{-1}
+        \begin{bmatrix} v_{j+1}-v_{j} \\ v_{l,j+1}-v_{l,j} \end{bmatrix},
+    \qquad
+    Q \;=\; \mathrm{diag}\!\bigl(\sigma_{v}^{2},\,\sigma_{l,\text{est}}^{2}\bigr).
+    \label{eq:cost_trans}
+\end{equation}
+
+\paragraph{Measurement cost.}
+The measurement cost follows the measurement model in the system equations, giving:
+\begin{equation}
+    J_{\text{meas}}(\mathbf{X}_{\text{win}};\,\mathbf{Y}_{\text{win}}) \;=\; \sum_{j=1}^{N_{\text{mhe}}}
+        \bigl(\mathbf{y}_{j} - \mathbf{h}(\mathbf{x}_{j})\bigr)^{\top}\!R^{-1}\bigl(\mathbf{y}_{j} - \mathbf{h}(\mathbf{x}_{j})\bigr),
+    \qquad
+    R \;=\; \sigma_{y}^{2}\,\mathbf{I}_{M},
+    \label{eq:cost_meas}
+\end{equation}
+where $\mathbf{h}(\cdot)$ is the euclidean distance calculation. The $y$ and $x$ are $M$x$1$ vectors where $M$ is the number of beacons. This calculation gives a scalar output. If the measurements exactly match the estimated states, this calculation will output zero. If they do not match these terms are multiplied by the R co-variance matrix. This is formed using the beacons std of $1.5m$ as provided in the specification. The beacons are also independent hence only the diagonals are populated in R. In the simulation $y$ is calculated in the loop given we know the exact states whereas in reality this would come from the sensors themselves and we would have no knowledge of the actual states. 
+
+\paragraph{Parameters Required by the Cost Function.}
+Beyond the decision variable $z$ itself, the cost function requires the following:
+\begin{itemize}
+    \item the arrival mean $\mathbf{x}_{\text{arr}}\in\mathbb{R}^{4}$ (given 4 states) and inverse arrival covariance $P_{\text{arr}}^{-1}\in\mathbb{R}^{4\times 4}$;
+    \item the inverse process covariance $Q^{-1} = \mathrm{diag}\!\bigl(1/\sigma_{v}^{2},\,1/\sigma_{l,\text{est}}^{2}\bigr)$, for the transition cost;
+    \item the inverse measurement covariance $R^{-1} = \sigma_{y}^{-2}\,\mathbf{I}_{M}$, for the measurement cost;
+    \item the measurement window $\mathbf{Y}_{\text{win}}\in\mathbb{R}^{M\times N_{\text{mhe}}}$, whose columns are the $M$x$1$ beacon measurements $\mathbf{y}_{j}$ at each step;
+    \item the beacon coordinates $\{\mathbf{b}_{i}\}_{i=1}^{M}$, used by $\mathbf{h}(\cdot)$;
+    \item the track geometry parameters $\{R_{1},\,R_{2},\,D,\,\alpha,\,L_{\text{str}},\ldots\}$, used by the path-to-world map $\mathbf{p}(s,l)$.
+\end{itemize}
+The first three are time-invariant tuning parameters for the estimator; the remaining three are data values that don't change during the cost calculation. Each time the cost function is called by the optimiser it will feed in new data values. 
+
+% ---------------------------------------------------------------------
+\subsubsection{Equality Constraints, Bounds and Solver Options}
+\label{subsubsec:est_constr}
+
+\paragraph{Equality constraints.}
+The linear transitions in the process model from $s_j$ to $s_{j+1}$ and $l_j$ to $l_{j+1}$ are encoded as linear equality constraints for $j = 1,\ldots,N_{\text{mhe}}$
+\begin{align}
+    s_{j+1} - s_{j} - h\,v_{j} \;&=\; 0, \label{eq:eq_constr_s}\\
+    l_{j+1} - l_{j} - h\,v_{l,j} \;&=\; 0, \label{eq:eq_constr_l}
+\end{align}
+Stacked, these form $A_{\text{eq}}\,z = b_{\text{eq}}$  where $b=0$ with $2*N_{\text{mhe}}$ rows and $4*(N_{\text{mhe}}+1)$ columns. Implementing them as hard constraints, rather than inside the transition cost removes their corresponding penalty terms from the cost entirely which can improve convergence. The modulo-$L_{\text{total}}$ wrap on $s$ is intentionally dropped at this stage because, within a single window of duration $N_{\text{mhe}}\,h$, the vehicle covers only a small fraction of the loop.
+
+\paragraph{Bounds.}
+The track-width constraint $|l|\leq l_{\max}$ is enforced through simple bounds:
+\begin{equation}
+    -l_{\max} \;\leq\; l_{j} \;\leq\; +l_{\max}, \qquad j = 1,\ldots,N_{\text{mhe}}+1.
+    \label{eq:est_bounds}
+\end{equation}
+All other state components are left unbounded ($lb = -\infty$, $ub = +\infty$). The same mechanism could be used to cap the longitudinal speed, e.g.\ $0 < v_{j} \leq 25$~m/s, as required by the system limits. This is not included because the chosen $\sigma_{v}$ keeps $v$ comfortably away from either bound.
+
+% ---------------------------------------------------------------------
+\subsection{Estimation}
+\label{subsec:est_params}
+
+\paragraph{Estimation Parameters.}
+The estimator's tuning parameters are listed in Table~\ref{tab:est_params}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l|l|l}
+        Symbol & Value & Description \\ \hline
+        $h$                             & $0.01$~s                                          & Estimator discretisation step equivalent to 100Hz \\
+        $N_{\text{mhe}}$                & $20$                                              & MHE window length (in measurements) \\
+        $\sigma_{v}$                    & $0.05$~m/s                                        & Estimator-side longitudinal process noise std \\
+        $\sigma_{l,\text{est}}$         & $0.01$~m/s                                        & Estimator-side lateral process noise std \\
+        $\sigma_{y}$                    & $1.5$~m                                           & Beacon range measurement noise std \\
+        $\mathbf{x}_{0,\text{prior}}$   & $[\,0,\,0,\,0,\,0\,]^{\top}$                      & Initial state prior mean \\
+        $P_{0}$                         & $\mathrm{diag}(10^{2},\,5^{2},\,1^{2},\,0.5^{2})$ & Initial state prior covariance \\
+        $P_{\text{arr,ss}}$             & $0.1\,P_{0}$                                      & Steady-state arrival covariance \\
+    \end{tabular}
+    \caption{MHE parameters.}
+    \label{tab:est_params}
+\end{table}
+
+$\sigma_{l,\text{est}}$ is the Gaussian representation for the Beta-based lateral noise. It is chosen to reproduce roughly the spread of the Beta noise averaged over the range of $l$. The initial prior $P_{0}$ is deliberately wide on every state component to reflect low confidence in initial estimated state. The steady-state arrival covariance $P_{\text{arr,ss}} = 0.1\,P_{0}$ is correspondingly tighter, to reflect the increase in confidence that the estimate has improved by the time the window is full.
+
+
+\paragraph{Estimation Loop.}
+In practice the estimator runs as a fixed-rate loop that executes the following steps once at every discrete time index $k$:
+
+\begin{enumerate}
+    \item \emph{Window setup.} Determine the current window. While $k < N_{\text{mhe}}$ the window is still growing; once $k \geq N_{\text{mhe}}$ it stays at maximum length.
+    \item \emph{Arrival-cost shift.} While the window is still filling, the arrival cost is the initial $(\mathbf{x}_{0,\text{prior}},\,P_{0})$ values. If the window is full ($n_{\text{states}} = N_{\text{mhe}}+1$), the arrival cost for the next iteration is the second state in the current window and the covariance move to the steady state value $P_{\text{arr,ss}}^{-1}$. 
+    \item \emph{Constraint and bound assembly.} Build the constraint matrix $A_{\text{eq}}$ and $b_{\text{eq}}=\mathbf{0}$, and populate $lb,\, ub$. These grow in size as the number of decision variables increase with each iteration. 
+    \item \emph{Cost handle.} Wrap the cost function into an handle of $z$, which will be pulled into the optimiser using the current values of $\mathbf{x}_{\text{arr}}$, $P_{\text{arr}}^{-1}$, $\mathbf{Y}_{\text{win}}$, the beacon positions and the main geometry.
+    \item \emph{Initial guess.} Create $z_{0}$ by shifting the previous window along by one slot. Then take the most recent set of states $x_t$ from the window, pass this through the dynamics for $x_{t+1}$ and append to the window;
+    \item \emph{Solve.} Call \texttt{fmincon} to obtain the optimum $z^{\star}$.
+    \item \emph{Output.} The final estimate $\widehat{\mathbf{x}}_{k}$ is taken to be the most recent state in the window.
+    \item \emph{Memory.} Save $\mathbf{X}_{\text{win}}^{\star}$ for the next iteration.
+\end{enumerate}
+One possible improvement here could be to update $P_{\text{arr}}^{-1}$ at every step using a more refined approach at the cost of additional implementation complexity.
+
+\paragraph{Beacons.}
+The three beacons are placed at the vertices of a roughly equilateral triangle that surrounds the track, providing coverage at every point on the loop. The final positions are listed in Table~\ref{tab:beacon_table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l|l|l}
+        Symbol & Value & Description \\ \hline
+        $\mathbf{b}_{1}$                & $(-30,\,60)$~m                                    & Beacon 1 location \\
+        $\mathbf{b}_{2}$                & $(130,\,60)$~m                                    & Beacon 2 location \\
+        $\mathbf{b}_{3}$                & $(50,\,-60)$~m                                    & Beacon 3 location \\
+    \end{tabular}
+    \caption{Beacon Positions.}
+    \label{tab:beacon_table}
+\end{table}
+
+
+% ---------------------------------------------------------------------
+\subsection{Performance}
+\label{subsec:perf}
+
+\paragraph{Estimation Error.}
+The estimator was run for simulated trajectory of length $T_{\text{sim}} = 60$~s ($N = 6000$ steps). The estimates states are shown in Figure~\ref{fig:est_states}. The RMSE error between the estimated states and the actual simulated states is shown in Figure~\ref{fig:est_error}. The estimated trajectory and beacons positions are shown in Figure~\ref{fig:track_tra}. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/estimation_states.pdf}
+    \caption{Estimated states.}
+    \label{fig:est_states}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/estimation_error.pdf}
+    \caption{Estimation error.}
+    \label{fig:est_error}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/track_trajectory.pdf}
+    \caption{Track Trajectory.}
+    \label{fig:track_tra}
+\end{figure}
+
+Table~\ref{tab:est_perf} reports the root-mean-square error (RMSE) of each state component, evaluated over the entire run.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{c|c|c|c}
+        RMSE $s$ [m] & RMSE $v$ [m/s] & RMSE $l$ [m] & RMSE $v_{l}$ [m/s] \\ \hline
+        $0.45$ & $2.91$ & $0.26$ & $0.24$ \\
+    \end{tabular}
+    \caption{Steady-state estimation RMSE.}
+    \label{tab:est_perf}
+\end{table}
+
+The estimator is able to accurately predict the $s$ state of the vehicle on the track. It takes the estimator a long time to reduce the error on the velocity prediction however this improves over time. Both the lateral position and velocity predictions are very noisy and have a high RMSE. The estimator struggles with the lateral velocity for a large portion of the track but seems to improve to a more acceptable mean however still with high levels of noise. 
+
+\paragraph{Estimation run-time.}
+Table~\ref{tab:est_time} reports the average run-time of the estimator in MATLAB evaluated over the entire run. It can be seen that for all window sizes the solve time is significantly greater than the 10ms measurement rate. Therefore for this setup a real-time implementation would not be feasible. This script was run on a HP Pavilion Notebook with Intel Core i7-7500U CPU processor. The code has not been optimised to improve timings and the convergence criteria for fmincon has not be refined. 
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{c|c}
+        $N_{\text{mhe}}$ & Time/step [ms] \\ \hline
+        $5$  & $194$   \\
+        $10$ & $262$   \\
+        $20$ & $419$  \\
+        $30$ & $681$  \\
+    \end{tabular}
+    \caption{Mean per-step solver time as a function of the MHE window length $N_{\text{mhe}}$.}
+    \label{tab:est_time}
+\end{table}
+
+\paragraph{Beacon Stability.}
+Additional simulations where carried out to investigate the impact of beacons on the estimator. The beacons locations for each can be seen in Figure~\ref{fig:beacon}.
+
+\begin{enumerate}
+    \item \emph 2 beacons only are available to the estimator to gain a better understanding of what happens when a beacons drops out. The left-most positioned beacon is the one that has been removed. 
+    \item \emph 4 beacons are providing measurements. They are placed in a rectangular shape around the track to determine if an improvement in RMSE could be achieved using an additional beacons with the same estimator parameters. 
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/beacons.pdf}
+    \caption{Track Trajectory.}
+    \label{fig:beacon}
+\end{figure}
+
+Table~\ref{tab:beacon_comp} shows a comparison of the RMSE values for each of these scenarios.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{c|cccc}
+        Beacons & RMSE $s$ [m] & RMSE $v$ [m/s] & RMSE $l$ [m] & RMSE $v_{l}$ [m/s] \\ \hline
+        $2$  & $2.04$ & $3.47$ & $0.46$ & $0.25$ \\
+        $3$ & $0.45$ & $2.91$ & $0.26$ & $0.24$ \\
+        $4$ & $0.32$ & $2.03$ & $0.25$ & $0.30$ \\
+    \end{tabular}
+    \caption{Steady-state estimation RMSE as a function of number of beacons}
+    \label{tab:beacon_comp}
+\end{table}
+
+It can be seen that increasing from 3 to 4 beacons does not give a significant improvement for $s,l,vl$ but does improve $v$ by more than 30 percent. When reducing the number of beacons we can see that the estimator is still able to provide reasonable results however $s$ has increased significantly to almost $2m$ which may not be accurate enough for the system requirements. This demonstrates a robust estimator model. As previously stated for all estimator models the RMSE values for $v$ are heavily influenced by the initial poor estimations in the first approx. $20s$ of the track. 
+
+\end{document}
