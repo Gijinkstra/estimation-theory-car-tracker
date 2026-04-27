@@ -1,6 +1,12 @@
 # Car Tracker Project
 
-The following pieces of information are possibly not going to be used. This is for collaborative report generation using git and latex, but as a group we may not use this. Going to set it up so we have something here for now.
+This is the repository for Team Alpha for Queen's University Belfast ELE8101 Control and Estimation theory module coursework 2 assignment.
+
+**Team members:**
+
+- Evan Calvert
+- Conor Hamill
+- Alastair Dempsey
 
 ## Project layout
 
@@ -13,193 +19,75 @@ project/
 │
 ├── src				# Main project files.
 │
-├── testing-area	# Put all messy scripts/testin ideas here.
+├── testing-area	# Put all messy scripts/testing ideas here.
 ```
 
-## The following info was produced using Claude to collaborate on LaTeX reports
+## Project Requirements
 
-- May have to install a markdown previewer for VSCode to view this document properly. Usually previewed using `Ctrl + Shift + V`.
-- Perl will likely need to be installed to run latexmk in the command line for Windows. I can do this, but if you want it, it can be done with `wingit install StrawberryPerl.StrawberryPerl` in Powershell.
-	- Check this by running `perl --version` followed by `latexmk --version`.
-- When compiling in the terminal, run `latexmk -pdf report.tex`.
+The scripts will require installation of Casadi to run.
 
-## LaTeX Project Layout for Git Collaboration
+- [Casadi version: 3.7.2](https://web.casadi.org/get/)
+- Arrow.m by Eric Johnson (MATLAB Add On)
 
-### Recommended Directory Structure
+Report requirements:
 
-```
-project/
-│
-├── .gitignore
-├── README.md
-├── Makefile                  # or latexmkrc
-│
-├── main.tex                  # root document
-├── preamble.sty              # shared custom styles/packages
-│
-├── chapters/                 # or sections/
-│   ├── 01_introduction.tex
-│   ├── 02_background.tex
-│   ├── 03_methodology.tex
-│   └── 04_conclusion.tex
-│
-├── figures/
-│   ├── raw/                  # original source files (svg, py, R scripts)
-│   └── output/               # generated figures (tracked .pdf/.png)
-│
-├── tables/
-│   └── results.tex
-│
-├── bibliography/
-│   └── references.bib
-│
-└── build/                    # gitignored compiled output
-```
+- LaTeX
+- Strawberry Perl (Windows - required for latexmk)
 
----
+## Problem statement
 
-### `main.tex` Structure
+The objective of the assignment is to build a vehicle model and an estimator to follow a predetermined track geometry, and determine the velocity and the position of the vehicle relative to 3 fixed beacon locations around the track. The track geometry is as follows:
 
-```latex
-\documentclass[12pt, a4paper]{article}
-\usepackage{preamble}
+![track-pic](report/figures/track-geometry.png)
 
-\title{Project Title}
-\author{Author One \and Author Two}
-\date{\today}
+where:
 
-\begin{document}
+- A: Circle 1 centre point [0, 0]
+- B: Circle 2 centre point [100, 0]
+- R: 50m
+- r: 46m
+- d: 100m
+- $\rho$: 25m
 
-\maketitle
-\tableofcontents
+## Estimators
 
-\input{chapters/01_introduction}
-\input{chapters/02_background}
-\input{chapters/03_methodology}
-\input{chapters/04_conclusion}
+Two estimators have been employed for the system, the Extended Kalman Filter, and a Bayesian estimator.
 
-\bibliographystyle{plain}
-\bibliography{bibliography/references}
+### Extended Kalman Filter
 
-\end{document}
-```
+A Gaussian velocity model is used, demonstrating why a naïve model with a random walk in velocity is not appropriate for this style of problem.
 
----
+The system model utilised for the trajectory is based on the Frenet frame of reference:
 
-### `Makefile` for Easy Building
+$s_{t+1} = s_t + v_{t}h$
 
-```makefile
-MAIN = main
-LATEX = pdflatex
-BIBTEX = biber
+$l_{t+1} = l_t + v_{l,t}h$
 
-all: $(MAIN).pdf
+$v_{s,t+1} = v_{s,t} + w_{s,t}$
 
-$(MAIN).pdf: $(MAIN).tex
-	$(LATEX) $(MAIN)
-	$(BIBTEX) $(MAIN)
-	$(LATEX) $(MAIN)
-	$(LATEX) $(MAIN)
+$v_{l,t+1} = v_{l,t} + w_{l,t}$
 
-clean:
-	rm -f *.aux *.log *.bbl *.bcf *.blg *.toc *.out *.run.xml
-	rm -f chapters/*.aux tables/*.aux
+where $s_t$ is the arc position at time $t$, $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, $v_l$ is the lateral velocity, and $w_t$ is a gaussian noise term, effectively acting as small deviations in acceleration. The output is defined as:
 
-cleanall: clean
-	rm -f $(MAIN).pdf
+$\mathbf{y} = ||r_{x, y} - r_{x, y}^{(i)}||_2 + o_t$
 
-.PHONY: all clean cleanall
-```
+where $\mathbf{y}$ is the output vector (Euclidean distance from each beacon), $r_{x, y}$ is the position of the vehicle on the track in cartesian co-ordinates, $r{x, y}^{(i)}$ is the position of each beacon measurement in cartesian co-ordinates and $o_t$ is a gaussian noise term. The state vector is:
 
-Or use **latexmk** (recommended):
-```bash
-# .latexmkrc
-$pdf_mode = 1;
-$out_dir = 'build';
-$clean_ext = 'aux bbl bcf blg idx ilg ind lof lot out run.xml toc acn acr alg glg glo gls ist fls fdb_latexmk synctex.gz';
-```
+$$x_t =
+\begin{bmatrix}s \\\ l \\\ v_s \\\ v_l
+\end{bmatrix}
+$$
 
-```bash
-latexmk -pdf main.tex       # build
-latexmk -C                  # clean all
-```
+Beacon placements as follows:
 
----
+$$r_{x,y} =
+\begin{bmatrix}
+-100 & -60 \\\ 20 & 90 \\\ 180 & -10
+\end{bmatrix}
+$$
 
-### `.gitignore` for This Layout
+An example of the trajectory of a vehicle with this trajectory is plotted below:
 
-```gitignore
-# Build output
-build/
-*.pdf
-*.dvi
+https://github.com/user-attachments/assets/06c5242d-76b0-45d6-bda2-75c305761a5e
 
-# Aux files
-*.aux
-*.log
-*.bbl
-*.bcf
-*.blg
-*.toc
-*.out
-*.fls
-*.gz
-*.run.xml
-*.fdb_latexmk
-
-# Keep these PDFs if figures are pre-compiled
-!figures/output/*.pdf
-!figures/output/*.png
-```
-
----
-
-### Git Collaboration Tips
-
-**Branch strategy:**
-```bash
-main          # stable, compiled version
-dev           # integration branch
-chapter/intro # per-chapter branches (one author per branch)
-```
-
-**Reducing merge conflicts:**
-```latex
-% Write one sentence per line — Git diffs line by line
-This is the first sentence.
-This is the second sentence, which is long and wraps
-but should still be on one line for clean diffs.
-```
-
-**Useful `.gitattributes`** to improve diffs:
-```gitattributes
-*.tex   diff=tex
-*.bib   diff=bibtex
-*.sty   diff=tex
-```
-
-Enable in git config:
-```bash
-git config diff.tex.xfuncname "^(\\\\(sub)*section\\*?\\{.*)$"
-```
-
----
-
-### Quick Init Script
-
-```bash
-#!/bin/bash
-mkdir -p project/{chapters,figures/{raw,output},tables,bibliography,build}
-cd project
-touch main.tex preamble.sty Makefile README.md .gitignore
-touch chapters/{01_introduction,02_background,03_methodology,04_conclusion}.tex
-touch bibliography/references.bib
-git init
-git add .
-git commit -m "Initial LaTeX project structure"
-```
-
-Run with:
-```bash
-bash setup.sh
-```
+### Bayesian Estimator

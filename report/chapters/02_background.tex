@@ -6,7 +6,7 @@
 \label{subsec:nwp}
 
 Numerical weather prediction (NWP) has been the dominant paradigm
-since the 1950s~\cite{richardson1922weather}.
+since the 1950s~ %\cite{richardson1922weather}.
 These models solve partial differential equations
 governing atmospheric dynamics on discrete spatial grids.
 
@@ -14,22 +14,15 @@ governing atmospheric dynamics on discrete spatial grids.
 \label{subsec:dl_approaches}
 
 Several deep learning methods have been proposed for weather forecasting.
-\citet{rasp2018dl} demonstrated that convolutional networks
+%\citet{rasp2018dl} demonstrated that convolutional networks
 can match NWP skill scores at short lead times.
-Subsequently, \citet{weyn2020improving} extended this to global forecasts
+Subsequently, %\citet{weyn2020improving} extended this to global forecasts
 using a cubed-sphere projection.
 
 \subsection{Transformer Models}
 \label{subsec:transformers}
 
-The transformer architecture~\cite{vaswani2017attention}
+The transformer architecture~ %\cite{vaswani2017attention}
 has achieved state-of-the-art results across a wide range of domains.
 Its self-attention mechanism allows modelling of long-range dependencies,
 making it well suited to spatiotemporal data.
-
-\begin{table}[h]
-    \centering
-    \input{tables/related_work}
-    \caption{Comparison of related approaches.}
-    \label{tab:related_work}
-\end{table}
