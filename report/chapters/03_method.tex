@@ -3,7 +3,7 @@
 
 \subsection{System Model}
 
-The system model used for the trajectory is based on the Frenet frame of reference [INSERT REFERENCE HERE]:
+The system model used for the trajectory is based on the Frenet frame of reference\cite{fjp_2025_github}:
 \begin{equation}
 \label{eq:sys-eqs}
     \begin{aligned}
@@ -13,7 +13,7 @@ The system model used for the trajectory is based on the Frenet frame of referen
         v_{l,t+1} &= v_{l,t} + w_{l,t}
     \end{aligned}
 \end{equation}
-where $s_t$ is the arc position, $h$ is the sampling period ($fs = 100Hz$), $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, $v_l$ is the lateral velocity, and $w_t$ is a gaussian noise term:
+where $s_t$ is the arc position at time $t$, $h$ is the sampling period ($fs = 100Hz$), $l_t$ is the lateral deviation from the centre line of the track, $v_{s, t}$ is the arc velocity, $v_{l,t}$ is the lateral velocity, and $w_t$ is a gaussian noise term:
 \begin{align}
 \label{eq:noise}
     w_t \sim \mathcal{N}\left(\mathbf{0}, \begin{bmatrix} 0.04 & 0 \\ 0 & 0.0001 \end{bmatrix}\right)
@@ -54,7 +54,7 @@ The track geometry is provided as part of the specification:
 \caption{Track geometry: $R: 50m$, $r: 46m$, $d: 100m$, $\rho: 25m$}
 \label{fig:track}
 \end{figure}
-The track is constructed by defining two circles of radii $r$ and $\rho$ centred at $(0, 0)$ and $(100, 0)$ respectively. Two tangent lines can be constructed based on the common tangent to both radii (external tangent) [INSERT REFERENCE HERE].
+The track is constructed by defining two circles of radii $r$ and $\rho$ centred at $(0, 0)$ and $(100, 0)$ respectively. Two tangent lines can be constructed based on the common tangent to both radii (external tangent)\cite{mathemerize_2021_common}.
 
 The outer boundary of the track can be defined by repeating this process for two additional circles of radii $R$ and $\rho + 4$m. The centreline of the track can then be generated simply by taking the average value of the inner and outer bounds.
 To save on development time, the Claude Opus 4.6 model was used to construct the track geometry. The initial results of the model were incorrect, producing the internal tangent lines, and was adjusted to correct this. The function is included in code block~\ref{lst:track}.
@@ -69,10 +69,17 @@ The base track geometry is defined in cartesian co-ordinates, and converted to t
 Tangent and normal unit vectors are then pre-calculated for each point to allow conversion back to the cartesian co-ordinate system.
 
 To convert from Frenet frame co-ordinates to the cartesian co-ordinate system, the closest point in the arc position $s$ is calculated via interpolation between $s$ and $(x,y)$ for each component. The unit vector can then be multiplied with $l$ as this term is just an offset from the centreline.
+\begin{equation}
+    \begin{aligned}
+        p_x &= X(s) + l \cdot n_x(s) \\
+        p_y &= Y(s) + l \cdot n_y(s)
+    \end{aligned}
+\end{equation}
+where $p_x, p_y$ is the current position, $X(s), Y(s)$ are the centreline co-ordaintes from interpolation $l$ is the lateral deviation from the centreline and $n_x(s), n_y(s)$ are the normal unit vectors.
 
 \subsubsection{Linearisation}
 
-As the measurement model of the system is non-linear, an approximation method must be applied to the system to implement the Extended Kalman Filter estimator [INSERT REF TO PANTELIS' NOTEBOOKS HERE]. The Jacobian of a function is defined as follows:
+As the measurement model of the system is non-linear, an approximation method must be applied to the system to implement the Extended Kalman Filter estimator\cite{sopasakis_2026_estimationtheorynotebooks}. The Jacobian of a function is defined as follows:
 
 \begin{equation}
 \label{eq:jacobian}
@@ -92,7 +99,7 @@ Given that the measurement model is continuously differentiable, the Jacobian ca
     f(x) \approx f(x_0) + Jf(x_0) (x - x_0)
 \end{equation}
 
-This can be applied to each row of the beacon locations (3 distinct cartesian co-ordinate locations). Computation of the Jacobian was carried out using CasADi 3.7.2 [INSERT REFERENCE HERE].
+This can be applied to each row of the beacon locations (3 distinct cartesian co-ordinate locations). Computation of the Jacobian was carried out using CasADi 3.7.2\cite{casadi_2025_casadi}.
 
 \subsection{Beacon Placement}
 \label{sec:beacon}
@@ -107,14 +114,21 @@ The beacons are placed at the following positions in the track, shown in Figure~
 \begin{equation}
     r_{x,y}^{3} = \begin{bmatrix} -100 & -60 \\ 20 & 90 \\ 180 & -10 \end{bmatrix}
 \end{equation}
-
+where the first column are the x positions, and the second column contains the y positions. This formation forms a triangle with adequate coverage for the track.
 \subsection{Extended Kalman Filter}
 
 The Extended Kalman Filter (EKF) has been used to estimate the state of the system. By applying the linearisation routine to the standard Kalman Filter system, an approximation of the measurement model can be formulated. In this system, the noise is additive, so $A$ is constant, $\tilde{Q}$ is constant, $\tilde{R}$ is constant and the only system matrix which changes is the measurement Jacobian $C = J_x h(\tilde{x})$
 \footnote{
     We refer to Dr.\ Pantelis Sopasakis' full derivation from the following repository: \url{https://github.com/alphaville/EstimationTheoryNotebooks}
-}.
+}. The Jacobian is updated at each timestep using the current state estimate using CasADi's automatic differentiation.
 
 For the EKF, the system must feature only gaussian noise terms, thus, the estimator cannot enforce constraints unless the assumptions of the estimator are violated. As the domain of the gaussian spans all $\mathbb{R}$, the lateral position of the vehicle will travel outside of the track. This is a known limitation of the EKF, in that constraints cannot be imposed. One method for forbidding unphysical behaviour in the system is to constrain the output of the estimated state to the only allowed domain of each respective state variable. This will also introduce an error in the measurement and time update terms, which would propagate through each subsequent update step, leading to an accumulation in error as the normality assumption has been violated. The estimated state trajectory would drift over time, causing the estimator to perform poorly.
 The EKF is clearly not the correct approach for this type of problem, but provides a reasonable baseline approach to the problem.
 
+The state model and state estimates are initialised as follows:
+\begin{equation}
+\label{eq:initial-conditions}
+\mathbf{x}_0 = \begin{bmatrix} 0 \\ 0 \\ 15 \\ 0 \end{bmatrix}, \quad
+\hat{\mathbf{x}}_0 = \begin{bmatrix} 0 \\ 0.5 \\ 15 \\ 1 \end{bmatrix}, \quad
+\Sigma_0 = \begin{bmatrix} 10 & 0 & 0 & 0 \\ 0 & 5 & 0 & 0 \\ 0 & 0 & 2 & 0 \\ 0 & 0 & 0 & 1 \end{bmatrix}
+\end{equation}
