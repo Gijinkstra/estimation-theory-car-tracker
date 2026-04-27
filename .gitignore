@@ -1,3 +1,6 @@
+# Mac OS system file.
+*.DS_Store
+
 # MATLAB files to ignore.
 *.asv
 

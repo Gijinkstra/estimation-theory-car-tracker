@@ -75,6 +75,7 @@ To convert from Frenet frame co-ordinates to the cartesian co-ordinate system, t
         p_y &= Y(s) + l \cdot n_y(s)
     \end{aligned}
 \end{equation}
+where $p_x, p_y$ is the current position, $X(s), Y(s)$ are the centreline co-ordaintes from interpolation $l$ is the lateral deviation from the centreline and $n_x(s), n_y(s)$ are the normal unit vectors.
 
 \subsubsection{Linearisation}
 
@@ -119,7 +120,7 @@ where the first column are the x positions, and the second column contains the y
 The Extended Kalman Filter (EKF) has been used to estimate the state of the system. By applying the linearisation routine to the standard Kalman Filter system, an approximation of the measurement model can be formulated. In this system, the noise is additive, so $A$ is constant, $\tilde{Q}$ is constant, $\tilde{R}$ is constant and the only system matrix which changes is the measurement Jacobian $C = J_x h(\tilde{x})$
 \footnote{
     We refer to Dr.\ Pantelis Sopasakis' full derivation from the following repository: \url{https://github.com/alphaville/EstimationTheoryNotebooks}
-}.
+}. The Jacobian is updated at each timestep using the current state estimate using CasADi's automatic differentiation.
 
 For the EKF, the system must feature only gaussian noise terms, thus, the estimator cannot enforce constraints unless the assumptions of the estimator are violated. As the domain of the gaussian spans all $\mathbb{R}$, the lateral position of the vehicle will travel outside of the track. This is a known limitation of the EKF, in that constraints cannot be imposed. One method for forbidding unphysical behaviour in the system is to constrain the output of the estimated state to the only allowed domain of each respective state variable. This will also introduce an error in the measurement and time update terms, which would propagate through each subsequent update step, leading to an accumulation in error as the normality assumption has been violated. The estimated state trajectory would drift over time, causing the estimator to perform poorly.
 The EKF is clearly not the correct approach for this type of problem, but provides a reasonable baseline approach to the problem.
