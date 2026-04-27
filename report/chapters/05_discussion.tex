@@ -4,16 +4,14 @@
 Figure~\ref{fig:ekf-trajectory} demonstrates how a random walk for the state dynamics is not an appropriate physical model for the dyanamics of the system, as the lateral position is a random walk trajectory and is almost certain to escape the bounds of the system, which is only enforced through a hard clamp on the state variables.
 This is further highlighted in Figure~\ref{fig:monte-carlo}, which also highlights the $2\sigma$ (standard deviation) for the path trajectories. It can be observed that all 3 relevant states of the system with constraints $(l, v_s, and v_l)$ escape their bounds.
 
-There are several possible approaches to at least partially rectify this behaviour. A mean-reverting term [INSERT REFERENCE HERE] could be placed on the states to enforce soft constraints on the system:
+There are several possible approaches to at least partially rectify this behaviour. A mean-reverting term\cite{uhlenbeck_1930_on} could be placed on the states to enforce soft constraints on the system:
 \begin{equation}
 \label{eq:mean-reversion}
     v_{t+1} = \alpha v_t + w_t
 \end{equation}
 Where $v_t$ is the velocity at time $t$, $w_t$ is a random gaussian noise term, and $\alpha$ is a scaling factor between 0 and 1. Given that the velocity in the system is only positive and initialised at 15 m/s, the velocity tajectoy will be scaled each step according to $\alpha$.
 
-Additionally, a Gaussian truncation model could be utilised, constraining the domain of the distribution function depending on the lateral deviation from the centre point on the track.
-
-Further constraint methods can be found in [INSERT REFERENCES HERE].
+Additionally, a Gaussian truncation model\cite{burkardt_2023_the} could be utilised, constraining the domain of the distribution function depending on the lateral deviation from the centre point on the track.
 
 \subsection{Limitations}
 \label{sec:limitations}
@@ -21,7 +19,7 @@ Further constraint methods can be found in [INSERT REFERENCES HERE].
 
 \subsection{Future work}
 \label{sec:future-work}
-There is much potential for further enhancement of the system. These are given below in no paritcular order:
+There is much potential for further enhancement of the system. These are outlined below in no paritcular order:
 
 \begin{itemize}
     \item Further development of the system model with position uncertainty.

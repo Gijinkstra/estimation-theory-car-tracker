@@ -13,7 +13,6 @@
 \usepackage{siunitx}
 \usepackage{verbatim}
 \usepackage{hyperref} % Required for inserting clickable links.
-\usepackage{natbib} % Required for APA-style citations.
 \usepackage{listings}
 \usepackage{matlab-prettifier}
 
@@ -29,17 +28,15 @@ Repository: \href{https://github.com/Gijinkstra/estimation-theory-car-tracker}
 \maketitle
 \tableofcontents
 
-\begin{abstract}
-    Undecided on if this is necessary.
-\end{abstract}
-
 % PLACEHOLDER: use \input{chapters/01_intro} or whatever the chapter is named to include it in the main document.
+\section*{Foreword}
+The authors would like to acknowledge the inconsistencies in the notation used throughout the report. Sections were developed independently, and written by based on the relevant author for each piece of work. Given the time constraints of the submission, this was deemed acceptable. There is repetition of statements and modelling throughout.
 
+Furthermore, the authors would like to acknowledge the use of Generative Artificial Intelligence in the creation of this piece of work. Conversational prompts and queries were utilised to expand understanding of the topic and problem proposed, and also to expand the capacity for figure creation and formatting.
 % Change this later.
 \input{chapters/01_intro.tex}
 
-% Remove until we decide if needed.
-%\input{chapters/02_background.tex}
+\input{chapters/02_background.tex}
 
 \input{chapters/03_method.tex}
 
@@ -49,7 +46,7 @@ Repository: \href{https://github.com/Gijinkstra/estimation-theory-car-tracker}
 
 \input{chapters/06_appendix.tex}
 
-\bibliographystyle{ieee}
-\bibliography{example}
+\bibliographystyle{IEEEtran}
+\bibliography{bibby/references}
 
 \end{document}
