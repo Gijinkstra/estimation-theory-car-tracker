@@ -33,6 +33,7 @@ The Extended Kalman Filter (EKF) process the non-linear distances using a Jacobi
 \begin{equation} \label{eq:ekf_update}
     \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \left( y_k - h(\hat{x}_{k|k-1}) \right)
 \end{equation}
+<<<<<<< HEAD
 This equation takes the predicted location and adds a correction. The size of the correction is determined by the difference in the predicted sensor readings and the measured sensor, this is known as the residual. This residual is then multiplied by the Kalman gain, which scales the influence of the sensor correction on the final estimation. If the prediction is deemed reliable, the sensor correction is suppressed, allowing the physical model to drive the system.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,3 +103,6 @@ being without the knowledge of the boundaries the filter may incorrectly estimat
 the state variance.
 
 \end{document}
+=======
+This equation takes the predicted location and adds a correction. The size of the correction is determined by the difference in the predicted sensor readings and the measured sensor, this is known as the residual. This residual is then multiplied by the Kalman gain, which scales the influence of the sensor correction on the final estimation. If the prediction is deemed reliable, the sensor correction is suppressed, allowing the physical model to drive the system.
+>>>>>>> 862032613337d870fa0af7846cdff5be6d3bd048
