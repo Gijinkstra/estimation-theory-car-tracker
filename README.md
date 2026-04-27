@@ -91,3 +91,9 @@ An example of the trajectory of a vehicle with this trajectory is plotted below:
 https://github.com/user-attachments/assets/06c5242d-76b0-45d6-bda2-75c305761a5e
 
 ### Bayesian Estimator
+
+**Example system model:**
+
+
+
+**Example estimator performance:**
