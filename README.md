@@ -61,9 +61,15 @@ A Gaussian velocity model is used, demonstrating why a naïve model with a rando
 
 The system model utilised for the trajectory is based on the Frenet frame of reference:
 
-$\mathbf{s_{t+1}} = \mathbf{s_t} + v_{t}h + w_t$
+$s_{t+1} = s_t + v_{t}h$
 
-where $\mathbf{x_t}$ is the full state space, $s$ is the arc position, $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, $v_l$ is the lateral velocity, and $w_t$ is a gaussian noise term, effectively acting as small deviations in acceleration. The output is defined as:
+$l_{t+1} = l_t + v_{l,t}h$
+
+$v_{s,t+1} = v_{s,t} + w_{s,t}$
+
+$v_{l,t+1} = v_{l,t} + w_{l,t}$
+
+where $s_t$ is the arc position at time $t$, $l$ is the lateral deviation from the centre line of the track, $v_s$ is the arc velocity, $v_l$ is the lateral velocity, and $w_t$ is a gaussian noise term, effectively acting as small deviations in acceleration. The output is defined as:
 
 $\mathbf{y} = ||r_{x, y} - r_{x, y}^{(i)}||_2 + o_t$
 
