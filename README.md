@@ -73,7 +73,10 @@ $\mathbf{y} = ||r_{x, y} - r_{x, y}^{(i)}||_2 + o_t$
 
 where $\mathbf{y}$ is the output vector (Euclidean distance from each beacon), $r_{x, y}$ is the position of the vehicle on the track in cartesian co-ordinates, $r{x, y}^{(i)}$ is the position of each beacon measurement in cartesian co-ordinates and $o_t$ is a gaussian noise term. The state vector is:
 
-$\mathbf{x_t} = \begin{bmatrix}s \\\ l \\\ v_s \\\ v_l \end{bmatrix}$
+$$x_t =
+\begin{bmatrix}s \\\ l \\\ v_s \\\ v_l
+\end{bmatrix}
+$$
 
 Beacon placements as follows:
 
