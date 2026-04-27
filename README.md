@@ -77,7 +77,11 @@ $\mathbf{x_t} = \begin{bmatrix}s \\\ l \\\ v_s \\\ v_l \end{bmatrix}$
 
 Beacon placements as follows:
 
-$r_{x,y} = \begin{bmatrix}-100 & -60 \\\ 20 & 90 \\\ 180 & -10 \end{bmatrix}$
+$$r_{x,y} =
+\begin{bmatrix}
+-100 & -60 \\\ 20 & 90 \\\ 180 & -10
+\end{bmatrix}
+$$
 
 An example of the trajectory of a vehicle with this trajectory is plotted below:
 
