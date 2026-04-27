@@ -94,6 +94,8 @@ https://github.com/user-attachments/assets/06c5242d-76b0-45d6-bda2-75c305761a5e
 
 **Example system model:**
 
-
+https://github.com/user-attachments/assets/e35e6f3f-c776-425e-9277-f5334c4419b7
 
 **Example estimator performance:**
+
+https://github.com/user-attachments/assets/7bc19d70-f20b-4145-ab8d-29ea12036658
