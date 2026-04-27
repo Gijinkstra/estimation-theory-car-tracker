@@ -35,7 +35,7 @@ The Extended Kalman Filter (EKF) process the non-linear distances using a Jacobi
 \end{equation}
 This equation takes the predicted location and adds a correction. The size of the correction is determined by the difference in the predicted sensor readings and the measured sensor, this is known as the residual. This residual is then multiplied by the Kalman gain, which scales the influence of the sensor correction on the final estimation. If the prediction is deemed reliable, the sensor correction is suppressed, allowing the physical model to drive the system.
 
-\section{Stage 2: 2D Curvilinear Estimation}
+\subsection{Stage 2: 2D Curvilinear Estimation}
 The second stage of the estimation was to introduce the two dimensional
 space, This allows for 4 degrees of freedom in the model, The vehicle can now
 move and change velocity along X and Y axis.
@@ -99,7 +99,7 @@ goes against the noise assumptions of a Gaussian distribution. Due to the estima
 being without the knowledge of the boundaries the filter may incorrectly estimate
 the state variance.
 
-\section{Stage 3: Curvilinear Estimation on a Circular Track}
+\subsection{Stage 3: Curvilinear Estimation on a Circular Track}
 The final stage of the initial development tracked the
 vehicle and circular path. The system was expressed using curvilinear coordinates
 to reduce the system complexity.

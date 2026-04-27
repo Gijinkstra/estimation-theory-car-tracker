@@ -7,6 +7,7 @@
 \parindent 8.4pt  % Sets leading space for paragraphs.
 \usepackage[font=sf]{caption} % Changes font of captions.
 
+\usepackage{float}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
@@ -15,7 +16,6 @@
 \usepackage{hyperref} % Required for inserting clickable links.
 \usepackage{listings}
 \usepackage{matlab-prettifier}
-
 
 \title{Estimation Theory: Coursework Submission 2}
 \author{Evan Calvert, Conor Hamill, Alastair Dempsey\thanks{
@@ -31,7 +31,7 @@ Repository: \href{https://github.com/Gijinkstra/estimation-theory-car-tracker}
 % PLACEHOLDER: use \input{chapters/01_intro} or whatever the chapter is named to include it in the main document.
 \section*{Foreword}
 The authors would like to acknowledge the inconsistencies in the notation used throughout the report. Sections were developed independently, and written by the relevant author for each piece of work. Given the time constraints of the submission, this was deemed acceptable.
-There is repetition of statements and modelling throughout.
+There is repetition of statements and slightly differet system models throughout.
 
 Furthermore, the authors would like to acknowledge the use of Generative Artificial Intelligence in the creation of this piece of work. Conversational prompts and queries were utilised to expand understanding of the topic and problem proposed, and also to expand the capacity for figure creation and formatting.
 % Change this later.
@@ -45,7 +45,13 @@ Furthermore, the authors would like to acknowledge the use of Generative Artific
 
 \input{chapters/05_discussion.tex}
 
-\input{chapters/06_appendix.tex}
+\input{chapters/06_system.tex}
+
+\input{chapters/07_bayesian.tex}
+
+\input{chapters/08_conclusion.tex}
+
+\input{chapters/09_appendix.tex}
 
 \bibliographystyle{IEEEtran}
 \bibliography{bibby/references}
