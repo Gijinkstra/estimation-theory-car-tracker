@@ -35,4 +35,70 @@ The Extended Kalman Filter (EKF) process the non-linear distances using a Jacobi
 \end{equation}
 This equation takes the predicted location and adds a correction. The size of the correction is determined by the difference in the predicted sensor readings and the measured sensor, this is known as the residual. This residual is then multiplied by the Kalman gain, which scales the influence of the sensor correction on the final estimation. If the prediction is deemed reliable, the sensor correction is suppressed, allowing the physical model to drive the system.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Stage 2: 2D Curvilinear Estimation}
+The second stage of the estimation was to introduce the two dimensional
+space, This allows for 4 degrees of freedom in the model, The vehicle can now
+move and change velocity along X and Y axis.
+
+\noindent The state vector is now \eqref{eq:state_vector_2d}, the
+longitudinal and lateral locations (Px,Py) and the longitudinal and lateral velocities
+(Vx,Vy).  
+\begin{equation} \label{eq:state_vector_2d}
+    \mathbf{x}_t = \begin{bmatrix} p_x \\ v_x \\ p_y \\ v_y \end{bmatrix}
+\end{equation}
+
+\noindent The system dynamics matrix is increased to a 4x4 matrix \eqref{eq:matrix_A_2d}, the Process
+noise is applied only to the velocity terms. 
+\begin{equation} \label{eq:matrix_A_2d}
+    A = \begin{bmatrix} 
+    1 & dt & 0 & 0 \\ 
+    0 & 1 & 0 & 0 \\ 
+    0 & 0 & 1 & dt \\ 
+    0 & 0 & 0 & 1 
+    \end{bmatrix}
+\end{equation}
+
+\noindent The mapping matrix G is used to distribute
+the noise terms into the correct velocities \eqref{eq:update_2d}. The state update equation is \eqref{eq:update_2d}.
+\begin{equation} \label{eq:G_matrix}
+    \mathbf G = \begin{bmatrix} 0 & 0 \\ 1 & 0 \\ 0.1 & 0 \\ 0 & 1 \end{bmatrix} 
+\end{equation}
+\begin{equation} \label{eq:update_2d}
+    \mathbf{x}_{t+1} = A\cdot G\cdot  \mathbf{w}_t
+\end{equation}
+
+\noindent The addition of the 2 dimensional space changes the measurement
+method. as there is no longer a fixed y position, a minimum of three beacons is
+required, to triangulate and estimate the vehicle location. The use of one
+beacon places the location of the vehicle on a circle of circumference of
+measured distance from vehicle to the beacon. If two beacons are used there
+will be two locations where the circles overlap which are potential locations for
+the vehicle to be at, the location where the vehicle is not is known as a ghost
+location. The use of a third beacon pinpoints the location of the vehicle. The Euclidean
+distance is measured between the car and the beacons \eqref{eq:measurement_2d}. 
+\begin{equation} \label{eq:measurement_2d}
+    h_i(\mathbf{x}_t) = \sqrt{(p_x - B_{x,i})^2 + (p_y - B_{y,i})^2}
+\end{equation}
+
+\noindent To handle the increased complexity of estimation model
+CASADi is used, this allows for the partial derivatives in the Jacobian matrix
+to be calculated using an algorithmic method, ensuring accuracy for each time point.
+
+\noindent Due to the nature of random movement within 2 Dimensional
+space hard coded boundaries were implemented \eqref{eq:constraints}. 
+\begin{equation} \label{eq:constraints}
+    \begin{aligned}
+        -2 &\le p_y \le 2 \\
+        0 &\le v_x \le 25 \\
+        -0.55 &\le v_y \le 0.55
+    \end{aligned}
+\end{equation}
+The track width was 4m to match
+that of the racetrack. With boundary lines at 2 and -2 on y axis. This however
+goes against the noise assumptions of a Gaussian distribution. Due to the estimation
+being without the knowledge of the boundaries the filter may incorrectly estimate
+the state variance.
+
 \end{document}
