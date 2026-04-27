@@ -1,28 +1,38 @@
-% This is all example text.
 \section{Background}
 \label{sec:background}
 
-\subsection{Numerical Weather Prediction}
-\label{subsec:nwp}
+\subsection{Stage 1: 1D Estimation On a Fixed Axis}
+The first stage of the estimation development was tracking the movement along a fixed axis. Using only the distance measurements from the beacons three stationary beacons to estimate the location and velocity.
 
-Numerical weather prediction (NWP) has been the dominant paradigm
-since the 1950s~ %\cite{richardson1922weather}.
-These models solve partial differential equations
-governing atmospheric dynamics on discrete spatial grids.
+\noindent The vehicles motion was modelled using a constant velocity method using the state vector \eqref{1D State Vector at t}. 
+\begin{equation}
+\label{1D State Vector at t}
+    \mathbf{x}_t = \begin{bmatrix} p_t \\ v_t \end{bmatrix}
+\end{equation}
+Where $p_t$ is the position and $v_t$ is the velocity at a given time $t$.
+\begin{equation}
+\label{State dynamics matrix A}
+    A = \begin{bmatrix} 1 & dt \\ 0 & 1 \end{bmatrix}
+\end{equation}
+The model does not contain a known control input such as throttle or breaking. The systems dynamics matrix A \eqref{State dynamics matrix A} controls the forward motion, Velocity is driven by the noise term $w_t$ \eqref{State update equation}.
+\begin{equation}
+\label{State update equation}
+    x_{t+1} = \begin{bmatrix} 1 & dt \\ 0 & 1 \end{bmatrix} \cdot \begin{bmatrix} p_t \\ v_t \end{bmatrix} + \begin{bmatrix} 0 \\ 1 \end{bmatrix} w_t
+\end{equation}
+\begin{equation}
+\label{State update equation simple}
+    x_{t+1} = (A)(x_t) + w_t
+\end{equation}
+A standard Kalman filter is not suitable for this system due to the beacon data being non-linear. The sensors do not measure the vehicle coordinates but instead the Euclidean distance from the beacon \eqref{eq:location}.
+\begin{equation} \label{eq:location}
+    y_t = \sqrt{(p_t - p_{beacon})^2} + \nu_t
+\end{equation}
+The Extended Kalman Filter (EKF) process the non-linear distances using a Jacobian matrix. The Jacobian matrix calculates a flat tangent line that approximates the curve at a given time interval. Due to the nature of Jacobian it is only accurate for the current time stamp, it is required that the state variance remains small, if the variance is too large the EKF does not work.
 
-\subsection{Deep Learning Approaches}
-\label{subsec:dl_approaches}
+\noindent Once the location data is linearised, the expected sensor measurement is calculated using equation \eqref{eq:ekf_update}.
+\begin{equation} \label{eq:ekf_update}
+    \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \left( y_k - h(\hat{x}_{k|k-1}) \right)
+\end{equation}
+This equation takes the predicted location and adds a correction. The size of the correction is determined by the difference in the predicted sensor readings and the measured sensor, this is known as the residual. This residual is then multiplied by the Kalman gain, which scales the influence of the sensor correction on the final estimation. If the prediction is deemed reliable, the sensor correction is suppressed, allowing the physical model to drive the system.
 
-Several deep learning methods have been proposed for weather forecasting.
-%\citet{rasp2018dl} demonstrated that convolutional networks
-can match NWP skill scores at short lead times.
-Subsequently, %\citet{weyn2020improving} extended this to global forecasts
-using a cubed-sphere projection.
-
-\subsection{Transformer Models}
-\label{subsec:transformers}
-
-The transformer architecture~ %\cite{vaswani2017attention}
-has achieved state-of-the-art results across a wide range of domains.
-Its self-attention mechanism allows modelling of long-range dependencies,
-making it well suited to spatiotemporal data.
+\end{document}
