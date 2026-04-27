@@ -33,10 +33,9 @@ The Extended Kalman Filter (EKF) process the non-linear distances using a Jacobi
 \begin{equation} \label{eq:ekf_update}
     \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \left( y_k - h(\hat{x}_{k|k-1}) \right)
 \end{equation}
-<<<<<<< HEAD
 This equation takes the predicted location and adds a correction. The size of the correction is determined by the difference in the predicted sensor readings and the measured sensor, this is known as the residual. This residual is then multiplied by the Kalman gain, which scales the influence of the sensor correction on the final estimation. If the prediction is deemed reliable, the sensor correction is suppressed, allowing the physical model to drive the system.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Stage 2: 2D Curvilinear Estimation}
 The second stage of the estimation was to introduce the two dimensional
@@ -102,7 +101,42 @@ goes against the noise assumptions of a Gaussian distribution. Due to the estima
 being without the knowledge of the boundaries the filter may incorrectly estimate
 the state variance.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Stage 3: Curvilinear Estimation on a Circular Track}
+The final stage of the initial development tracked the
+vehicle and circular path. The system was expressed using curvilinear coordinates
+to reduce the system complexity.
+
+\noindent This allowed for the state vector to be reduced back to two
+variables, arc position ($s_t$) and velocity ($v_{s,t}$) \eqref{eq:state_vector_arc}. 
+\begin{equation} \label{eq:state_vector_arc}
+    \mathbf{x}_t = \begin{bmatrix} s_t \\ v_{s,t} \end{bmatrix}
+\end{equation}
+The physical dynamics remain linear due to using the distance travelled along the curve as the $s$. The $A$ matrix used for the 1 dimensional estimator can be used again \eqref{eq:matrix_A_arc}.
+\begin{equation} \label{eq:matrix_A_arc}
+    A = \begin{bmatrix} 1 & dt \\ 0 & 1 \end{bmatrix}
+\end{equation}
+
+\noindent The estimator is unable to directly compare the predicted
+arc length to the distance data collected form the beacons, to overcome this the
+measured distance from the beacons is converted into Cartesian coordinates \eqref{eq:cartesian_mapping}. 
+\begin{equation} \label{eq:cartesian_mapping}
+    \begin{aligned}
+        p_x &= R \cos\left(\frac{s_t}{R}\right) \\
+        p_y &= -R \sin\left(\frac{s_t}{R}\right)
+    \end{aligned}
+\end{equation}
+By using the known radius of the vehicle track. The sine transform is used to ensure positive
+velocity is maintain clockwise around the track.
+
+\noindent Once the cartesian plane is calculated Euclidean distance
+can be calculated \eqref{eq:measurement_arc}. 
+\begin{equation} \label{eq:measurement_arc}
+    h_i(\mathbf{x}_t) = \sqrt{\left( R \cos\left(\frac{s_t}{R}\right) - B_{x,i} \right)^2 + \left( -R \sin\left(\frac{s_t}{R}\right) - B_{y,i} \right)^2}
+\end{equation}
+The use of CASADI allows for accuracy when calculating the
+Jacobian matrix.
+
+
 \end{document}
-=======
-This equation takes the predicted location and adds a correction. The size of the correction is determined by the difference in the predicted sensor readings and the measured sensor, this is known as the residual. This residual is then multiplied by the Kalman gain, which scales the influence of the sensor correction on the final estimation. If the prediction is deemed reliable, the sensor correction is suppressed, allowing the physical model to drive the system.
->>>>>>> 862032613337d870fa0af7846cdff5be6d3bd048
