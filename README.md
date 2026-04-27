@@ -22,8 +22,6 @@ project/
 ├── testing-area	# Put all messy scripts/testing ideas here.
 ```
 
-Note: src was not used. Too much effort to refactor.
-
 ## Project Requirements
 
 The scripts will require installation of Casadi to run.
